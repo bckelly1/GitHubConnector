@@ -1,1 +1,1 @@
-# GitHubConnector
+# com.mycompany.app.GitHubConnector
