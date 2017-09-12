@@ -1,64 +1,70 @@
 package com.kelbr09.tests;
-/**
- *
- * */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+
+/**
+ *  Quick tool to get all associated pull requests in my GitHub account
+ *
+ *  Brian Kelly
+ *  9/12/17
+ * */
 public class GitHubConnector {
-    private List<JSONObject> getAllRepos(JSONArray jsonArray){
-        List<JSONObject> repoArray = new ArrayList<>();
-        for(int i = 0; i < jsonArray.length(); i++){
-            try {
-                JSONObject jsonObject = (JSONObject) jsonArray.get(i);
-                repoArray.add(jsonObject);
-            } catch (JSONException e) {
-                e.printStackTrace();
+    private static final String TITLE = "title";
+    private static final String URL = "url";
+    private static final String NAME = "name";
+
+
+    private List<Repository> getAllRepos(final String username){
+        List<Repository> repoArray = new ArrayList<>();
+
+        String repositoryUrl = "https://api.github.com/users/" + username + "/repos";
+        try{
+            RestResponse restResponse = new RestClient().restCall(repositoryUrl);
+
+            if(restResponse.getResponseCode() == HttpURLConnection.HTTP_OK){
+                JSONArray jsonArray = new JSONArray(restResponse.getResponseBody());
+
+                for(int i = 0; i < jsonArray.length(); i++){
+                    JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+                    String name = jsonObject.getString(NAME);
+                    String url = jsonObject.getString(URL);
+
+                    repoArray.add(new Repository(url, name));
+                }
             }
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
         return repoArray;
     }
 
-    private List<JSONObject> getAllPullRequests(String repoName){
-        List<JSONObject> jsonObjects = new ArrayList<>();
+    private List<PullRequest> getAllPullRequests(final String username, final String repoName){
 
-        String urlString = "https://api.github.com/repos/bckelly1/" + repoName + "/pulls";
+        List<PullRequest> jsonObjects = new ArrayList<>();
+
+        String pullRequestUrl = "https://api.github.com/repos/" + username + "/" + repoName + "/pulls";
         try {
-            URL url = new URL(urlString);
+            RestResponse restResponse = new RestClient().restCall(pullRequestUrl);
 
+            if(restResponse.getResponseCode() == HttpURLConnection.HTTP_OK){
+                JSONArray jsonArray = new JSONArray(restResponse.getResponseBody());
 
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
-
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
-            }
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-            String output;
-            JSONArray jsonArray = null;
-            while ((output = br.readLine()) != null) {
-                jsonArray = new JSONArray(output);
-            }
-
-            if(jsonArray != null){
                 for(int i = 0; i < jsonArray.length(); i++){
-                    jsonObjects.add((JSONObject) jsonArray.get(i));
+                    JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+
+                    String title = jsonObject.getString(TITLE);
+                    String url = jsonObject.getString(URL);
+                    jsonObjects.add(new PullRequest(url, title));
                 }
             }
-        } catch (IOException | JSONException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
         }
 
@@ -66,44 +72,25 @@ public class GitHubConnector {
     }
 
     public static void main(String[] args) {
+        final String username = "bckelly1";
+
         GitHubConnector gitHubConnector = new GitHubConnector();
-        try {
-            URL url = new URL("https://api.github.com/users/bckelly1/repos");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
+        List<Repository> allRepositories = gitHubConnector.getAllRepos(username);
 
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode());
+        for(Repository repository : allRepositories){
+            List<PullRequest> pullRequests = gitHubConnector.getAllPullRequests(username, repository.getName());
+            repository.setPullRequestList(pullRequests);
+        }
+
+
+        System.out.println(username + "'s Repositories: " + allRepositories.size());
+        for(Repository repository : allRepositories){
+            System.out.println("\t|-- " + repository.getName() + " - " + repository.getPullRequestList().size());
+            for(PullRequest pullRequest : repository.getPullRequestList()){
+                System.out.println("\t\t |-- " + pullRequest.getTitle());
+                System.out.println("\t\t\t " + pullRequest.getUrl());
+
             }
-            BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-            String output;
-            JSONArray jsonArray;
-            List<JSONObject> allRepos = new ArrayList<>();
-            System.out.println("Output from Server .... \n");
-            while ((output = br.readLine()) != null) {
-                jsonArray = new JSONArray(output);
-
-                allRepos = gitHubConnector.getAllRepos(jsonArray);
-            }
-
-            System.out.println("bckelly1 Repos: " + allRepos.size());
-            for(JSONObject jsonObject : allRepos){
-                System.out.print("\t|-- " + jsonObject.get("name"));
-
-                List<JSONObject> pullRequests = gitHubConnector.getAllPullRequests(jsonObject.getString("name"));
-                System.out.println(" - " + pullRequests.size());
-                for(JSONObject pullRequest : pullRequests){
-                    System.out.println("\t\t |-- " + pullRequest.getString("title"));
-                    System.out.println("\t\t\t " + pullRequest.getString("url"));
-                }
-            }
-            conn.disconnect();
-
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
         }
     }
-
 }
