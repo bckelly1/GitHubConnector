@@ -82,10 +82,7 @@ public class GitHubConnector {
 
         System.out.println(username + "'s Repositories: " + allRepositories.size());
         for(Repository repository : allRepositories){
-            System.out.print("\t|-- " + repository.getName());
-            if(repository.getPullRequestList().size() == 0){
-                System.out.println();
-            }
+            System.out.println("\t|-- " + repository.getName() + " - " + repository.getPullRequestList().size());
             for(PullRequest pullRequest : repository.getPullRequestList()){
                 System.out.println("\t\t |-- " + pullRequest.getTitle());
                 System.out.println("\t\t\t " + pullRequest.getUrl());
