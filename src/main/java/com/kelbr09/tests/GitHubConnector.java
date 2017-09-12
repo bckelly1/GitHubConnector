@@ -95,7 +95,7 @@ public class GitHubConnector {
                 List<JSONObject> pullRequests = gitHubConnector.getAllPullRequests(jsonObject.getString("name"));
                 System.out.println(" - " + pullRequests.size());
                 for(JSONObject pullRequest : pullRequests){
-                    System.out.println("\t\t |-- " + pullRequest.getString("name"));
+                    System.out.println("\t\t |-- " + pullRequest.getString("title"));
                     System.out.println("\t\t\t " + pullRequest.getString("url"));
                 }
             }
