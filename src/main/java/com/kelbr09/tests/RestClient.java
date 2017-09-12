@@ -6,8 +6,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+/**
+ * RestClient library to handle REST API calls to any URL.
+ * */
+
 public class RestClient {
-    public RestResponse restCall(String urlString){
+    public RestResponse restCall(final String urlString){
         RestResponse restResponse = null;
         try{
             URL url = new URL(urlString);
