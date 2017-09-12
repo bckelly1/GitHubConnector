@@ -7,8 +7,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,24 +16,8 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 public class GitHubConnector {
-    private static void printJson(String jsonString){
-        jsonString = jsonString.replace(",", ",\n");
-        System.out.println(jsonString);
-    }
-
-    private JSONObject parseJson(String jsonString){
-        JSONObject jsonObject = null;
-        try {
-            jsonObject = new JSONObject(jsonString);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return jsonObject;
-    }
-
     private List<JSONObject> getAllRepos(JSONArray jsonArray){
-        List<JSONObject> repoArray = new ArrayList<JSONObject>();
+        List<JSONObject> repoArray = new ArrayList<>();
         for(int i = 0; i < jsonArray.length(); i++){
             try {
                 JSONObject jsonObject = (JSONObject) jsonArray.get(i);
@@ -98,7 +80,7 @@ public class GitHubConnector {
 
             String output;
             JSONArray jsonArray;
-            List<JSONObject> allRepos = new ArrayList<JSONObject>();
+            List<JSONObject> allRepos = new ArrayList<>();
             System.out.println("Output from Server .... \n");
             while ((output = br.readLine()) != null) {
                 jsonArray = new JSONArray(output);
@@ -113,15 +95,13 @@ public class GitHubConnector {
                 List<JSONObject> pullRequests = gitHubConnector.getAllPullRequests(jsonObject.getString("name"));
                 System.out.println(" - " + pullRequests.size());
                 for(JSONObject pullRequest : pullRequests){
-                    System.out.println("\t\t |-- " + pullRequest.getString("name"));
+                    System.out.println("\t\t |-- " + pullRequest.getString("title"));
                     System.out.println("\t\t\t " + pullRequest.getString("url"));
                 }
             }
             conn.disconnect();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
     }
