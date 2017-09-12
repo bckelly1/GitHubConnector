@@ -14,7 +14,7 @@ import org.codehaus.jettison.json.JSONObject;
 public class GitHubConnector {
     private static final String TITLE = "title";
     private static final String URL = "url";
-    private static final String NAME = "url";
+    private static final String NAME = "name";
 
 
     private List<Repository> getAllRepos(String username){
@@ -29,8 +29,8 @@ public class GitHubConnector {
 
                 for(int i = 0; i < jsonArray.length(); i++){
                     JSONObject jsonObject = (JSONObject) jsonArray.get(i);
-                    String name = jsonObject.get(NAME) + "";
-                    String url = jsonObject.get(URL) + "";
+                    String name = jsonObject.getString(NAME);
+                    String url = jsonObject.getString(URL);
 
                     repoArray.add(new Repository(url, name));
                 }
@@ -75,8 +75,6 @@ public class GitHubConnector {
         List<Repository> allRepositories = gitHubConnector.getAllRepos(username);
 
         for(Repository repository : allRepositories){
-            System.out.println("polling repo: " + repository.getName());
-            System.out.println("polling repo url: " + repository.getUrl());
             List<PullRequest> pullRequests = gitHubConnector.getAllPullRequests(repository.getName());
             repository.setPullRequestList(pullRequests);
         }
@@ -85,6 +83,9 @@ public class GitHubConnector {
         System.out.println(username + "'s Repositories: " + allRepositories.size());
         for(Repository repository : allRepositories){
             System.out.print("\t|-- " + repository.getName());
+            if(repository.getPullRequestList().size() == 0){
+                System.out.println();
+            }
             for(PullRequest pullRequest : repository.getPullRequestList()){
                 System.out.println("\t\t |-- " + pullRequest.getTitle());
                 System.out.println("\t\t\t " + pullRequest.getUrl());
